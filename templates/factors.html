@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>特征影响因素分析</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .chart-container {
+            margin: 2rem 0;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+            text-transform: capitalize;
+        }
+        .nav-item {
+            margin-left: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}">二手车分析系统</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('upload') }}">新数据上传</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('information') }}">基本信息分析</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{{ url_for('factors') }}">影响因素分析</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('predict') }}">二手车价预测</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <div class="container mt-5">
+        <h2 class="mb-4">影响因素分析</h2>
+        <div class="row" id="image-gallery">
+            <!-- 图像会通过 JS 动态插入 -->
+        </div>
+    </div>
+
+    <!-- 动态加载图像 -->
+    <script>
+        fetch('/factors_data')
+            .then(res => res.json())
+            .then(data => {
+                const gallery = document.getElementById('image-gallery');
+                data.images.forEach(imgName => {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-6 chart-container text-center';
+
+                    const img = document.createElement('img');
+                    img.src = `/static/images/${imgName}`;
+                    img.alt = imgName;
+                    img.className = 'img-fluid rounded';
+
+                    const title = document.createElement('p');
+                    title.className = 'chart-title';
+                    title.textContent = imgName.replace('.png', '');
+
+                    col.appendChild(title);
+                    col.appendChild(img);
+                    gallery.appendChild(col);
+                });
+            });
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

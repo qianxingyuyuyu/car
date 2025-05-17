@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二手车基本信息分析</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .chart-container {
+            margin: 2rem 0;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+        }
+        .chart-description {
+            color: #7f8c8d;
+            margin-bottom: 1rem;
+        }
+        .nav-item {
+            margin-left: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}">二手车分析系统</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('upload') }}">新数据上传</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('information') }}">基本信息分析</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('factors') }}">影响因素分析</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('predict') }}">二手车价预测</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <div class="container mt-5">
+        <h2 class="mb-4">二手车基本信息分析</h2>
+
+        <!-- 车辆类型分布 -->
+        <div class="chart-container">
+            <h4 class="chart-title">车辆类型分布直方图</h4>
+            <p class="chart-description">展示各类车辆（豪华轿车、微型车...）在二手车市场中的占比情况</p>
+            <img src="/static/bodyType.png" alt="车辆类型分布" class="img-fluid rounded">
+        </div>
+
+        <!-- 车辆动力分布 -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h4 class="chart-title">车辆动力情况分布</h4>
+                    <p class="chart-description">展示车辆的动力情况（汽油、柴油...）在二手车市场中的占比情况</p>
+                    <img src="/static/fuelType.png" alt="动力分布" class="img-fluid rounded">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h4 class="chart-title">车辆售价分布</h4>
+                    <p class="chart-description">二手车市场的销售价格分布图（单位：万元）</p>
+                    <img src="/static/price.png" alt="价格分布" class="img-fluid rounded">
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h4 class="chart-title">分类特征分布情况</h4>
+                    <select id="infoSelect1" onchange="submitSelection('infoSelect1', 'image1')">
+                        <option value="">-- 请选择 --</option>
+                        <option value="gearbox">车辆变速箱类型</option>
+                        <option value="notRepairedDamage">车辆损坏修复情况</option>
+                    </select>
+                    <p class="chart-description">可视化展示二手车相关分类特征的分布情况</p>
+                    <div id="image1" style="margin-bottom: 20px;"></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h4 class="chart-title">数值特征分布情况</h4>
+                    <select id="infoSelect2" onchange="submitSelection('infoSelect2', 'image2')">
+                        <option value="">-- 请选择 --</option>
+                        <option value="kilometer">车辆行驶里程</option>
+                        <option value="power">车辆发动机功率</option>
+                        <option value="regDate">车辆注册时间</option>
+                        <option value="creatDate">车辆上线时间</option>
+                    </select>
+                    <p class="chart-description">可视化展示二手车相关数值特征的分布情况</p>
+                    <div id="image2" style="margin-bottom: 20px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 相关性分析 -->
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="chart-container">
+                    <h4 class="chart-title">特征相关性热力图</h4>
+                    <p class="chart-description">各数值特征与车价的相关性矩阵可视化</p>
+                    <img src="/static/correlation.png" alt="相关性分析" class="img-fluid rounded">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="chart-container h-100">
+                    <h4 class="chart-title">TOP5相关特征</h4>
+                    <p class="chart-description">与车价相关性最高的特征：</p>
+                    <ul class="list-group">
+                        <li class="list-group-item">v_3 (-0.93)</li>
+                        <li class="list-group-item">v_8 (0.83)</li>
+                        <li class="list-group-item">v_12 (0.81)</li>
+                        <li class="list-group-item">v_0 (0.78)</li>
+                        <li class="list-group-item">power (0.55)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 缺失值分析 -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h4 class="chart-title">训练数据缺失值</h4>
+                    <img src="/static/nan.png" alt="训练缺失值" class="img-fluid rounded">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function submitSelection(selectId, imageContainerId) {
+          const selectedValue = document.getElementById(selectId).value;
+          if (!selectedValue) return;
+          fetch('/get_image', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ type: selectedValue })
+          })
+          .then(response => response.json())
+          .then(data => {
+            const container = document.getElementById(imageContainerId);
+            container.innerHTML = `<img src="/static/${data.image}" alt="相关图片"  class="img-fluid rounded">`;
+          })
+          .catch(error => {
+            console.error('请求出错:', error);
+          });
+        }
+      </script>
+</body>
+</html>

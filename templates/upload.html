@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型训练数据上传</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 15px;
+        }
+        .upload-card {
+            margin-top: 2rem;
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+        }
+        .format-table th {
+            background-color: #f8f9fa;
+            white-space: nowrap;
+        }
+        .example-row {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .note-text {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        .nav-item {
+            margin-left: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}">二手车分析系统</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('upload') }}">新数据上传</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('information') }}">基本信息分析</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('factors') }}">影响因素分析</a>
+                    </li>
+                    <li class="nav-link" href="{{ url_for('predict') }}">二手车价预测</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="container mt-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+        <div class="card upload-card">
+    <div class="card-body text-center">  <!-- 添加 text-center 类使内容居中 -->
+        <h2 class="card-title mb-4">数据上传</h2>
+
+        <!-- 上传表单 -->
+        <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data" class="d-inline-block text-start">
+            <!-- 使用 d-inline-block 使表单保持原有宽度，text-start 保持内部文本左对齐 -->
+            <div class="mb-4">
+                <label for="dataFile" class="form-label">选择CSV文件</label>
+                <input class="form-control" type="file" id="dataFile" name="dataFile" accept=".csv" required>
+                <div class="note-text mt-2">仅支持CSV格式文件，最大100MB</div>
+            </div>
+            <div class="text-center">  <!-- 单独为按钮添加居中 -->
+                <button type="submit" class="btn btn-primary px-4">
+                    开始上传
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+        <!-- 数据格式说明 -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h3 class="card-title mb-3">数据格式要求</h3>
+                <div class="table-responsive">
+                    <table class="table format-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>列名</th>
+                                <th>说明</th>
+                                <th>格式/取值</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>regDate</td>
+                                <td>上牌日期</td>
+                                <td>日期格式 (YYYY-MM-DD)</td>
+                            </tr>
+                            <tr>
+                                <td>brand</td>
+                                <td>品牌</td>
+                                <td>文本 (如："Toyota")</td>
+                            </tr>
+                            <tr>
+                                <td>bodyType</td>
+                                <td>车身结构</td>
+                                <td>0-豪华轿车 1-微型车<br>2-厢型车 3-大巴车<br>4-敞篷车 5-双门汽车<br>6-商务车 7-搅拌车</td>
+                            </tr>
+                            <tr>
+                                <td>fuelType</td>
+                                <td>燃料类型</td>
+                                <td>0-汽油 1-柴油<br>2-液化石油气 3-天然气<br>4-混合动力 5-其他 6-电动</td>
+                            </tr>
+                            <tr>
+                                <td>gearbox</td>
+                                <td>变速箱</td>
+                                <td>0-手动 1-自动</td>
+                            </tr>
+                            <tr>
+                                <td>power</td>
+                                <td>发动机功率</td>
+                                <td>0-600 马力</td>
+                            </tr>
+                            <tr>
+                                <td>kilometer</td>
+                                <td>行驶里程</td>
+                                <td>单位：万公里</td>
+                            </tr>
+                            <tr>
+                                <td>notRepairedDamage</td>
+                                <td>未修复损伤</td>
+                                <td>0-是 1-否</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="example-row">
+                    <h5 class="mb-2">示例数据：</h5>
+                    <code>
+                        2020-05-15,Toyota,1,0,1,150,8.5,1<br>
+                        2018-12-01,BMW,0,6,1,245,5.2,0
+                    </code>
+                    <div class="note-text mt-2">注意：第一行为列标题，请严格按照列顺序排列数据</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            const fileInput = document.getElementById('dataFile');
+            if (!fileInput.files[0]) {
+                alert('请选择要上传的文件');
+                e.preventDefault();
+                return;
+            }
+
+            const fileName = fileInput.files[0].name;
+            if (!fileName.toLowerCase().endsWith('.csv')) {
+                alert('请上传CSV格式的文件');
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

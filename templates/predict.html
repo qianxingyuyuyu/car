@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>房价预测分析</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .prediction-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+        }
+        .feature-badge {
+            margin: 0.3rem;
+            padding: 0.5rem 1rem;
+            background-color: #e9ecef;
+            border-radius: 20px;
+        }
+        .price-display {
+            font-size: 2.5rem;
+            color: #dc3545;
+            font-weight: bold;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        .model-diagram {
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .nav-item {
+            margin-left: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}">二手车分析系统</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('upload') }}">新数据上传</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('information') }}">基本信息分析</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('factors') }}">影响因素分析</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('predict') }}">二手车价预测</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container mt-5">
+        <h2 class="mb-4">二手车价格预测系统</h2>
+    
+        <!-- 预测表单 -->
+        <div class="prediction-card">
+            <h4 class="mb-4">请输入车辆信息</h4>
+            <form method="POST" action="{{ url_for('predict_car') }}">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <label class="form-label">上牌日期（regDate）</label>
+                        <input type="date" class="form-control" name="regDate" required>
+                    </div>
+                    <!-- 品牌 -->
+                    <div class="col-md-4">
+                        <label class="form-label">品牌（brand）</label>
+                        <select class="form-select" name="brand" required>
+                            <option value="">请选择</option>
+                            <option value="0">奥迪</option>
+                            <option value="1">宝马</option>
+                            <option value="2">奔驰</option>
+                            <option value="3">大众</option>
+                            <option value="4">丰田</option>
+                            <option value="5">本田</option>
+                            <option value="6">日产</option>
+                            <option value="7">别克</option>
+                            <option value="8">现代</option>
+                            <option value="9">起亚</option>
+                            <option value="10">福特</option>
+                            <option value="11">雪佛兰</option>
+                            <option value="12">标致</option>
+                            <option value="13">雪铁龙</option>
+                            <option value="14">三菱</option>
+                            <option value="15">马自达</option>
+                            <option value="16">斯巴鲁</option>
+                            <option value="17">铃木</option>
+                            <option value="18">沃尔沃</option>
+                            <option value="19">英菲尼迪</option>
+                            <option value="20">捷豹</option>
+                            <option value="21">路虎</option>
+                            <option value="22">保时捷</option>
+                            <option value="23">特斯拉</option>
+                            <option value="24">荣威</option>
+                            <option value="25">名爵</option>
+                            <option value="26">吉利</option>
+                            <option value="27">长城</option>
+                            <option value="28">比亚迪</option>
+                            <option value="29">奇瑞</option>
+                            <option value="30">江淮</option>
+                            <option value="31">一汽</option>
+                            <option value="32">东风</option>
+                            <option value="33">哈弗</option>
+                            <option value="34">众泰</option>
+                            <option value="35">力帆</option>
+                            <option value="36">红旗</option>
+                            <option value="37">蔚来</option>
+                            <option value="38">小鹏</option>
+                            <option value="39">理想</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">车身类型（bodyType）</label>
+                        <select class="form-select" name="bodyType" required>
+                            <option value="">请选择</option>
+                            <option value="0">豪华轿车</option>
+                            <option value="1">微型车</option>
+                            <option value="2">厢型车</option>
+                            <option value="3">大巴车</option>
+                            <option value="4">敞篷车</option>
+                            <option value="5">双门汽车</option>
+                            <option value="6">商务车</option>
+                            <option value="7">搅拌车</option>
+                        </select>
+                    </div>
+                </div>
+    
+                <div class="row g-4 mt-1">
+                    <div class="col-md-4">
+                        <label class="form-label">燃油类型（fuelType）</label>
+                        <select class="form-select" name="fuelType" required>
+                            <option value="">请选择</option>
+                            <option value="0">汽油</option>
+                            <option value="1">柴油</option>
+                            <option value="2">液化石油气</option>
+                            <option value="3">天然气</option>
+                            <option value="4">混合动力</option>
+                            <option value="5">其他</option>
+                            <option value="6">电动</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">变速箱类型（gearbox）</label>
+                        <select class="form-select" name="gearbox" required>
+                            <option value="">请选择</option>
+                            <option value="0">手动</option>
+                            <option value="1">自动</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">发动机功率（马力）（power）</label>
+                        <input type="number" class="form-control" name="power" placeholder="如：110" required>
+                    </div>
+                </div>
+    
+                <div class="row g-4 mt-1">
+                    <div class="col-md-6">
+                        <label class="form-label">行驶里程（万公里）（kilometer）</label>
+                        <input type="number" step="0.1" class="form-control" name="kilometer" placeholder="如：8.5" required>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label">是否有未修复损伤（notRepairedDamage）</label>
+                        <select class="form-select" name="notRepairedDamage" required>
+                            <option value="">请选择</option>
+                            <option value="0">无</option>
+                            <option value="1">有</option>
+                            <option value="2">不确定</option>
+                        </select>
+                    </div>
+                </div>
+                
+    
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">立即预测</button>
+                </div>
+            </form>
+            {% if prices %}
+    <div class="price-display">
+        <p>预测价格如下：</p>
+        <div class="row text-center">
+            <div class="col-md-3">
+                <div class="card shadow-sm p-3">
+                    <h5 class="text-muted">当前价格</h5>
+                    <div class="text-danger fs-4">¥ {{ prices.today }}万元</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm p-3">
+                    <h5 class="text-muted">30天后</h5>
+                    <div class="text-danger fs-4">¥ {{ prices['30d'] }}万元</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm p-3">
+                    <h5 class="text-muted">3个月后</h5>
+                    <div class="text-danger fs-4">¥ {{ prices['90d'] }}万元</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm p-3">
+                    <h5 class="text-muted">半年后</h5>
+                    <div class="text-danger fs-4">¥ {{ prices['180d'] }}万元</div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% if matched_preview %}
+    <div class="mt-5">
+        <h5>历史样本参考（匹配条件：品牌 + 车身类型 + 燃油类型 + 变速箱）</h5>
+        <table class="table table-bordered mt-3">
+            <thead class="table-light">
+                <tr>
+                    <th>上牌时间</th>
+                    <th>已使用时间（天）</th>
+                    <th>功率</th>
+                    <th>行驶公里数</th>
+                    <th>成交价格（万元）</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in matched_preview %}
+                <tr>
+                    <td>{{ row.regDate }}</td>
+                    <td>{{ row.power }}</td>
+                    <td>{{ row.kilometer }}</td>
+                    <td>{{ row.used_time }}</td>
+                    <td>{{ row.price }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
