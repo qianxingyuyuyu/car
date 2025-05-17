@@ -26,11 +26,8 @@ test = pd.read_csv('test_data_v1.csv', sep=' ')
 
 # ✅ 删除 price ≤ 0 的样本
 train = train[train['price'] > 0]
-num_brands = train['brand'].nunique()
-print(f"共有 {num_brands} 种不同的品牌")
-from ipdb import set_trace
-set_trace()
-# ✅ 添加 used_time 特征（单位：天）
+
+# 2. 添加时间特征 used_time（单位：天）
 train['regDate'] = pd.to_datetime(train['regDate'], format='%Y%m%d', errors='coerce')
 train['creatDate'] = pd.to_datetime(train['creatDate'], format='%Y%m%d', errors='coerce')
 test['regDate'] = pd.to_datetime(test['regDate'], format='%Y%m%d', errors='coerce')
@@ -39,34 +36,35 @@ test['creatDate'] = pd.to_datetime(test['creatDate'], format='%Y%m%d', errors='c
 train['used_time'] = (train['creatDate'] - train['regDate']).dt.days
 test['used_time'] = (test['creatDate'] - test['regDate']).dt.days
 
-# ✅ 只选择指定字段
-feature_cols = ['brand', 'bodyType', 'fuelType', 'gearbox', 'power', 'kilometer', 'notRepairedDamage', 'used_time']
-X = train[feature_cols]
-X_test = test[feature_cols]
+# 3. 提取特征和标签
+drop_cols = ['SaleID', 'price', 'regDates', 'creatDates', 'regDate', 'creatDate']
+X = train.drop(columns=drop_cols)
+X_test = test.drop(columns=drop_cols)
 
 # ✅ 填充缺失值
 X = X.fillna(0)
 X_test = X_test.fillna(0)
 
-# ✅ 标签取 log1p
+# ✅ 对 price 取 log1p
 y = np.log1p(train['price'])
 
-# ✅ 标准化特征
+# 4. 标准化特征
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 X_test_scaled = scaler.transform(X_test)
 
-# ✅ 划分训练验证集
+# 5. 划分训练验证集
 X_train_scaled, X_val_scaled, y_train_np, y_val_np = train_test_split(
     X_scaled, y.values, test_size=0.2, random_state=seed)
 
+# ✅ 转为 Tensor 并迁移到设备
 X_train_tensor = torch.tensor(X_train_scaled, dtype=torch.float32).to(device)
 y_train_tensor = torch.tensor(y_train_np, dtype=torch.float32).view(-1, 1).to(device)
 X_val_tensor = torch.tensor(X_val_scaled, dtype=torch.float32).to(device)
 y_val_tensor = torch.tensor(y_val_np, dtype=torch.float32).view(-1, 1).to(device)
 X_test_tensor = torch.tensor(X_test_scaled, dtype=torch.float32).to(device)
 
-# ✅ 构建神经网络模型
+# 6. 构建模型
 class Net(nn.Module):
     def __init__(self, input_dim):
         super(Net, self).__init__()
@@ -86,16 +84,16 @@ class Net(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-net = Net(X_train_scaled.shape[1]).to(device)
+net = Net(X_train_scaled.shape[1]).to(device)  # ✅ 模型迁移到 device
 
-# ✅ 设置训练参数
+# 7. 设置训练参数
 loss_fn = nn.MSELoss()
 optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
 batch_size = 256
 epochs = 100
 patience = 10
 
-# ✅ 训练模型
+# 8. 训练模型
 train_loader = DataLoader(TensorDataset(X_train_tensor, y_train_tensor), batch_size=batch_size, shuffle=True)
 best_loss = float('inf')
 early_stop_counter = 0
@@ -108,21 +106,17 @@ for epoch in range(epochs):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-
+    
     net.eval()
     with torch.no_grad():
         val_pred = net(X_val_tensor)
         val_loss = loss_fn(val_pred, y_val_tensor).item()
 
     print(f"Epoch {epoch+1}, Val Loss: {val_loss:.5f}")
-
+    
     if val_loss < best_loss:
         best_loss = val_loss
         best_model = net.state_dict()
-        import joblib
-        torch.save(best_model, 'best_model.pth')
-        joblib.dump(scaler, 'scaler.pkl')
-        print("✅ 模型参数和标准化器已保存")
         early_stop_counter = 0
     else:
         early_stop_counter += 1
@@ -130,20 +124,20 @@ for epoch in range(epochs):
             print("✅ Early stopping triggered.")
             break
 
-# ✅ 加载最优模型并预测
+# 9. 加载最优模型并预测
 net.load_state_dict(best_model)
 net.eval()
 with torch.no_grad():
-    nn_val_pred = net(X_val_tensor).cpu().numpy().flatten()
+    nn_val_pred = net(X_val_tensor).cpu().numpy().flatten()  # ✅ 转为 CPU
     nn_test_pred = net(X_test_tensor).cpu().numpy().flatten()
 
-# ✅ RMSE 评估
+# 10. RMSE 评估
 def rmse(y_true, y_pred):
     return np.sqrt(mean_squared_error(np.expm1(y_true), np.expm1(y_pred)))
 
 print("模型 RMSE:", rmse(y_val_np, nn_val_pred))
 
-# ✅ 输出预测结果
+# 11. 输出预测结果
 submission = pd.DataFrame({
     'SaleID': test['SaleID'],
     'price': np.expm1(nn_test_pred)
